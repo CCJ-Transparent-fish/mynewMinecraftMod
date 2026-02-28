@@ -1,0 +1,26 @@
+# gradle
+build/
+.gradle/
+gradle-app.setting
+!gradle-wrapper.jar
+
+# eclipse
+*.classpath
+*.project
+*.settings/
+bin/
+
+# idea
+*.ipr
+*.iml
+*.iws
+.idea/
+
+# vscode
+.vscode/
+
+# mac
+.DS_Store
+
+# local
+run/
