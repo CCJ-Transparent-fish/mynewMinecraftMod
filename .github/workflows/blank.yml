@@ -1,32 +1,61 @@
-name: Release Mod
+name: Build Mod
 
 on:
-  # 创建标签时触发
   push:
-    tags:
-      - 'v*'
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+  # 允许手动触发
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    
     steps:
-      - name: Checkout
+      # 检出代码
+      - name: Checkout repository
         uses: actions/checkout@v4
       
+      # 设置JDK 21
       - name: Setup JDK 21
         uses: actions/setup-java@v4
         with:
           java-version: '21'
           distribution: 'temurin'
       
-      - name: Build with Gradle
-        run: chmod +x gradlew && ./gradlew build
-      
-      - name: Create Release
-        uses: softprops/action-gh-release@v1
+      # 缓存Gradle依赖
+      - name: Cache Gradle packages
+        uses: actions/cache@v4
         with:
-          files: |
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+      
+      # 给gradlew执行权限
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
+      
+      # 编译模组
+      - name: Build with Gradle
+        run: ./gradlew build
+      
+      # 上传编译好的模组文件
+      - name: Upload mod artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: Mod JARs
+          path: |
             build/libs/*.jar
-          generate_release_notes: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            !build/libs/*-sources.jar
+            !build/libs/*-dev.jar
+      
+      # 上传源代码JAR（可选）
+      - name: Upload sources artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Mod Sources
+          path: build/libs/*-sources.jar
